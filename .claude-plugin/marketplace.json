@@ -1,0 +1,17 @@
+{
+  "name": "model-router-marketplace",
+  "owner": {
+    "name": "Mayur Patel"
+  },
+  "metadata": {
+    "description": "Per-task model routing for AI coding tools: send each piece of work to a fast, standard or deep model with shared per-project rules. A Claude Code plugin with token reports and proof of which model ran, plus a setup script for Cursor, Codex CLI, Gemini CLI and OpenCode.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "model-router",
+      "source": "./plugins/model-router",
+      "description": "Routes each task to Haiku, Sonnet or Opus by difficulty, ambiguity and risk, or by your own per-project rules. Escalates on failure, announces every routing decision, and reports tokens per model with proof of which model answered."
+    }
+  ]
+}

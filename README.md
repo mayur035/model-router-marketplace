@@ -20,14 +20,19 @@ Requires `bash` and `python3` (standard library only, for `/route-usage`).
 
 ```bash
 # inside Claude Code
-/plugin marketplace add /path/to/model-router-marketplace
+/plugin marketplace add mayur035/model-router-marketplace
 /plugin install model-router@model-router-marketplace
 
 # or from a terminal
-claude plugin marketplace add /path/to/model-router-marketplace
+claude plugin marketplace add mayur035/model-router-marketplace
 claude plugin install model-router@model-router-marketplace
 ```
-(Or push this folder to GitHub and use `/plugin marketplace add your-user/your-repo`.)
+
+To install it for everyone on a project, add `--scope project` to the install command and commit
+`.claude/settings.json`. Teammates are prompted to install the plugin when they trust the repo.
+
+To work on the plugin itself, clone the repo and add the local folder instead:
+`/plugin marketplace add /path/to/model-router-marketplace`.
 
 Restart Claude Code after installing. Recommended main model: `/model opusplan` or `/model opus`.
 
@@ -40,12 +45,7 @@ Commit it to share the rules with your team, or add it to `.gitignore` to keep t
 
 ## Update
 
-**Installed from a local folder** (`/plugin marketplace add /path/to/model-router-marketplace`):
-Claude Code reads the plugin straight from that folder. `claude plugin list` shows it as
-"Read from: /path/to/model-router-marketplace/plugins/model-router". Edits apply after
-`/reload-plugins` or a restart; no update command is needed.
-
-**Installed from GitHub or another git source:** pull the new version, then:
+**Installed from GitHub** (`mayur035/model-router-marketplace`):
 
 ```bash
 claude plugin marketplace update model-router-marketplace
@@ -58,6 +58,11 @@ a single project, run this from inside that project too (use `--scope local` for
 ```bash
 claude plugin update model-router@model-router-marketplace --scope project
 ```
+
+**Installed from a local folder** (`/plugin marketplace add /path/to/model-router-marketplace`):
+Claude Code reads the plugin straight from that folder. `claude plugin list` shows it as
+"Read from: /path/to/model-router-marketplace/plugins/model-router". Edits apply after
+`/reload-plugins` or a restart; no update command is needed.
 
 `claude plugin list` shows each install, its version and where it's read from. Restart Claude
 Code afterwards.
@@ -245,13 +250,16 @@ routing instructions go in a marked section per tool, so several tools can share
 and your own text in that file is kept.
 
 ```bash
-python3 /path/to/model-router-marketplace/universal/model-router.py tools
+# get the script (once)
+git clone https://github.com/mayur035/model-router-marketplace.git ~/model-router-marketplace
+
+python3 ~/model-router-marketplace/universal/model-router.py tools
 
 # OpenCode has defaults (Anthropic models)
-python3 /path/to/model-router-marketplace/universal/model-router.py init opencode
+python3 ~/model-router-marketplace/universal/model-router.py init opencode
 
 # the others need the model ID for each tier, in that tool's own naming
-python3 /path/to/model-router-marketplace/universal/model-router.py init cursor \
+python3 ~/model-router-marketplace/universal/model-router.py init cursor \
   --fast <model> --standard <model> --deep <model>
 ```
 

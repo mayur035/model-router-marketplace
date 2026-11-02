@@ -76,6 +76,20 @@ run `/route-config reset`.
 
 ## Use
 
+Routing is automatic: you don't need to type a command. After install, just ask for the work
+("add payment retries to checkout") and Claude routes it. Three hooks keep it on:
+
+- **Session start:** tells Claude the plugin is active.
+- **Every prompt:** a one-line reminder to route build, fix, implement and refactor work.
+  Questions, planning, writing and tiny edits are not routed.
+- **Every subagent launch:** shows which model is running each task.
+
+To turn off the per-prompt reminder, set `"auto": false` at the top level of
+`.model-router.json`, or set `MODEL_ROUTER_AUTO=0` in your environment. The commands below
+still work either way.
+
+The commands are optional, for forcing or inspecting routing:
+
 - `/route add payment retries with idempotency` - plan, route, execute, report
 - `/route-explain refactor the auth module` - dry run: show routing only
 - `/route-config use opus for reasoning, haiku for tests` - set which tier does which kind of work

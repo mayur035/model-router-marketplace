@@ -1,6 +1,6 @@
 {
   "name": "model-router",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Per-task model routing for Claude Code: Haiku for mechanical work, Sonnet for standard coding, Opus for hard reasoning, or your own per-project rules. Escalates on failure, announces each routing decision, and reports tokens per model with proof of which model answered.",
   "author": { "name": "Mayur Patel" },
   "license": "MIT",

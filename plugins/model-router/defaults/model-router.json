@@ -1,5 +1,6 @@
 {
-  "about": "Which tier handles which kind of work in this project. tier: fast, standard or deep; each tool maps tiers to its own models. A rule may give an exact 'model' instead of a 'tier'. If several rules fit a task, the stronger tier wins; if none fit, the built-in rubric decides.",
+  "about": "Which tier handles which kind of work in this project. tier: fast, standard or deep; each tool maps tiers to its own models. A rule may give an exact 'model' instead of a 'tier'. If several rules fit a task, the stronger tier wins; if none fit, the built-in rubric decides. auto: false turns off the per-prompt routing reminder.",
+  "auto": true,
   "rules": [
     {
       "when": "reasoning, architecture and design tradeoffs, concurrency and race conditions, security, auth, payments, data integrity, complex algorithms, bugs that already failed once, unclear requirements",

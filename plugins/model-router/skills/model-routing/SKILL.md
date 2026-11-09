@@ -73,15 +73,13 @@ project rules file, then the rubric in step 3.
 
 - **In the request**, e.g. `add tests: claude-haiku-5-5, fix the race in checkout: claude-opus-5-5`
   or "use opus for X". Short names (`haiku`, `sonnet`, `opus`, `fable`) and full IDs both work.
-- **Rules file** `.model-router.json` in the project root (older projects:
-  `.claude/model-router.json`). Other tools such as Cursor, Codex, Gemini CLI and OpenCode read
-  the same file. Before step 3, run the init script (path in the model-router session-start
-  message) from the project root: it creates the file from the plugin defaults if neither
-  exists, and prints the path it found or created. If it printed `created:`, tell the user in
-  one line that default rules were added there and can be edited or changed with
-  `/model-router:route-config`. Then read the file and apply a rule when its `when` text fits
-  the task. If more than one rule fits, use the stronger tier. A rule names a `tier` or an
-  exact `model`:
+- **Rules file:** the one the init script prints. Before step 3, run the init script (path in
+  the model-router session-start message) from the project root: it creates the file from the
+  plugin defaults if none exists, and prints the path it found or created. If it printed
+  `created:`, tell the user in one line that default rules were added there and can be edited or
+  changed with `/model-router:route-config`. Then read the file and apply a rule when its `when`
+  text fits the task. If more than one rule fits, use the stronger tier. A rule names a `tier` or
+  an exact `model`:
   ```json
   { "rules": [ { "when": "tests, docs, formatting", "tier": "fast" },
                { "when": "payments, auth, migrations", "model": "claude-opus-5-5" } ] }

@@ -5,7 +5,7 @@ argument-hint: <what to build or fix>
 Use the model-routing skill for this request. Decompose it, score each task,
 announce each routing decision with its reason, delegate to the fast-worker,
 coder, and deep-reasoner subagents, escalate on failure, and finish with the summary table.
-Apply any models the user chose for specific tasks in the request, or the rules in
-`.model-router.json` (or `.claude/model-router.json` in older projects), before the rubric.
+Apply any models the user chose for specific tasks in the request, or the rules in the
+rules file the init script prints, before the rubric.
 
 Request: $ARGUMENTS

@@ -45,7 +45,7 @@ def ensure(root) -> tuple[Path, bool]:
     if found:
         return found, False
     target = root / _NAME
-    target.write_text(_DEFAULTS.read_text(encoding="utf-8"), encoding="utf-8")
+    _write_text(target, _DEFAULTS.read_text(encoding="utf-8"))
     return target, True
 
 
@@ -86,8 +86,21 @@ def auto_enabled(root) -> bool:
     return True if rf is None else rf.auto
 
 
+def _write_text(path: Path, text: str) -> None:
+    """Write without following a symlink, so a planted link can't redirect the write."""
+    if path.is_symlink():
+        raise RulesFileError(f"{path} is a symlink; refusing to write through it")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(path, flags, 0o644)
+    except OSError as e:
+        raise RulesFileError(f"cannot write {path}: {e}") from e
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(text)
+
+
 def _write(path: Path, data) -> None:
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _write_text(path, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
 def _defaults_data() -> dict:

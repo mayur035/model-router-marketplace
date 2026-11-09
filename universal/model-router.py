@@ -169,7 +169,10 @@ def init(args: argparse.Namespace) -> None:
                 for tier in TIERS if paths[tier].exists()}
     models = resolve_models(tool, args, existing, args.force)
 
-    rules_path, created = rules_file.ensure(project)
+    try:
+        rules_path, created = rules_file.ensure(project)
+    except rules_file.RulesFileError as e:
+        sys.exit(f"Cannot set up the rules file: {e}")
     relative_rules = rules_path.relative_to(project)
     if created:
         print(f"rules:  created {relative_rules} with default rules")

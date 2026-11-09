@@ -221,5 +221,36 @@ class CliTest(Base):
         self.assertTrue(out.startswith("error: "), out)
 
 
+class SymlinkTest(Base):
+    """A rules file that is a symlink is never written through."""
+
+    def setUp(self):
+        super().setUp()
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        self.victim = Path(outside.name) / "victim.txt"
+
+    def test_reset_refuses_symlink(self):
+        self.victim.write_text("keep me")
+        self.current.symlink_to(self.victim)
+        code, out = self.cli("reset", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertTrue(out.startswith("error: "), out)
+        self.assertEqual(self.victim.read_text(), "keep me")
+
+    def test_clear_refuses_symlink(self):
+        self.victim.write_text('{"rules": [{"when": "a", "tier": "fast"}]}')
+        self.current.symlink_to(self.victim)
+        code, out = self.cli("clear", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertEqual(self.victim.read_text(), '{"rules": [{"when": "a", "tier": "fast"}]}')
+
+    def test_ensure_refuses_dangling_symlink(self):
+        self.current.symlink_to(self.victim)
+        code, out = self.cli("ensure", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertFalse(self.victim.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

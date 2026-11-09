@@ -118,7 +118,7 @@ a `tier` (`fast`, `standard`, `deep`), which every tool maps to its own models, 
 The first routed task in a project creates this file from
 `plugins/model-router/defaults/model-router.json` (deep for reasoning and risky work, standard
 for clear-spec features, fast for mechanical work), so you can see and edit what's being used.
-If several rules fit a task, the stronger tier wins; if none fit, the built-in rubric decides.
+If several rules fit a task, the stronger tier wins; if none fit, the built-in rubric decides. The file also takes an `auto` key that turns the per-prompt reminder off (see [Use](#use)).
 
 Projects set up before 1.6.0 have `.claude/model-router.json` with `model` rules. It still works
 everywhere: Claude model names map to tiers by family (haiku = fast, sonnet = standard,
@@ -169,6 +169,9 @@ echo '{"tool_name":"Agent","tool_input":{"subagent_type":"model-router:coder","m
 # rules file: first run prints "created:", second prints "exists:"
 D=$(mktemp -d) && bash plugins/model-router/scripts/init-config.sh "$D" \
   && bash plugins/model-router/scripts/init-config.sh "$D" && rm -rf "$D"
+
+# rules file: prints "ok:" or "error:" (exit 1)
+python3 plugins/model-router/scripts/rules_file.py check
 
 # other tools: should list the rules file, three subagents and AGENTS.md
 D=$(mktemp -d) && python3 universal/model-router.py init opencode --project "$D" \

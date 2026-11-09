@@ -17,7 +17,10 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tier_catalog  # noqa: E402
+
+PREFIX = "model-router:"
 TOKEN_FIELDS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens",
                 "output_tokens")
 FAMILIES = ("haiku", "sonnet", "opus", "fable")
@@ -36,16 +39,13 @@ def find_session(arg: str | None) -> Path:
     return sessions[-1]
 
 
-def expected_models() -> dict[str, str]:
-    """agentType -> model declared in this plugin's agent frontmatter."""
-    expected = {}
-    for agent_file in (PLUGIN_ROOT / "agents").glob("*.md"):
-        text = agent_file.read_text()
-        name = re.search(r"^name:\s*(\S+)", text, re.M)
-        model = re.search(r"^model:\s*(\S+)", text, re.M)
-        if name and model:
-            expected[f"model-router:{name.group(1)}"] = model.group(1)
-    return expected
+def expected_model(agent_type: str) -> str:
+    """Model declared for a model-router agentType, or "-" when it is not a tier agent."""
+    try:
+        tier = tier_catalog.for_agent(agent_type) if agent_type.startswith(PREFIX) else None
+    except tier_catalog.TierCatalogError:
+        return "-"
+    return tier.model if tier else "-"
 
 
 def read_entries(transcript: Path) -> list[dict]:
@@ -115,7 +115,6 @@ def main() -> None:
     last_only = "--last" in args
     paths = [arg for arg in args if arg != "--last"]
     session = find_session(paths[0] if paths else None)
-    expected = expected_models()
 
     entries = read_entries(session)
     scope = "whole session"
@@ -139,7 +138,7 @@ def main() -> None:
         if launches.get(tool_use_id):
             requested, source = launches[tool_use_id], " (chosen)"
         else:
-            requested, source = expected.get(agent_type, "-"), " (default)"
+            requested, source = expected_model(agent_type), " (default)"
         runs.append((meta.get("description", transcript.stem), agent_type, requested,
                      source if requested != "-" else "", read_entries(transcript)))
 

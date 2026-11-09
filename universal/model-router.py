@@ -14,20 +14,20 @@ Usage:
 import argparse
 import json
 import re
-import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN_ROOT = REPO_ROOT / "plugins" / "model-router"
+sys.path.insert(0, str(PLUGIN_ROOT / "scripts"))
+import rules_file  # noqa: E402
+import tier_catalog  # noqa: E402
+
 ROUTING_TEMPLATE = Path(__file__).resolve().parent / "ROUTING.md"
-RULES_FILE = ".model-router.json"
-LEGACY_RULES_FILE = ".claude/model-router.json"
 BLOCK_START = "<!-- model-router:{tool}:start -->"
 BLOCK_END = "<!-- model-router:{tool}:end -->"
 TIERS = ("fast", "standard", "deep")
-TIER_SOURCE = {"fast": "fast-worker", "standard": "coder", "deep": "deep-reasoner"}
 
 
 @dataclass(frozen=True)
@@ -84,20 +84,7 @@ TOOLS = {
 }
 
 
-def read_source_agent(tier: str) -> tuple[str, str]:
-    """(description, instructions) from the Claude Code plugin's agent file for this tier."""
-    text = (PLUGIN_ROOT / "agents" / f"{TIER_SOURCE[tier]}.md").read_text()
-    match = re.match(r"---\n(.*?)\n---\n(.*)", text, re.S)
-    if not match:
-        sys.exit(f"Unreadable agent file for tier {tier}")
-    frontmatter, body = match.groups()
-    description = re.search(r"^description:\s*(.+)$", frontmatter, re.M).group(1)
-    description = description.replace("by the model-router skill", "by model-router")
-    return description.strip(), body.strip() + "\n"
-
-
-def agent_name(tool: Tool, tier: str) -> str:
-    name = TIER_SOURCE[tier]
+def agent_name(tool: Tool, name: str) -> str:
     return name.replace("-", "_") if tool.underscore_names else name
 
 
@@ -171,19 +158,28 @@ def init(args: argparse.Namespace) -> None:
     project = Path(args.project).resolve()
     if not project.is_dir():
         sys.exit(f"Not a directory: {project}")
+    try:
+        catalog = tier_catalog.tiers()
+    except tier_catalog.TierCatalogError as e:
+        sys.exit(f"Cannot read the plugin's tier agents: {e}")
     agents_dir = project / tool.agents_dir
-    names = {tier: agent_name(tool, tier) for tier in TIERS}
+    names = {tier: agent_name(tool, catalog[tier].agent) for tier in TIERS}
     paths = {tier: agents_dir / f"{names[tier]}{tool.extension}" for tier in TIERS}
     existing = {tier: existing_model(paths[tier]) or "unknown"
                 for tier in TIERS if paths[tier].exists()}
     models = resolve_models(tool, args, existing, args.force)
 
-    rules = project / RULES_FILE
-    if rules.exists() or (project / LEGACY_RULES_FILE).exists():
-        print(f"rules:  kept existing {RULES_FILE if rules.exists() else LEGACY_RULES_FILE}")
+    rules_path, created = rules_file.ensure(project)
+    relative_rules = rules_path.relative_to(project)
+    if created:
+        print(f"rules:  created {relative_rules} with default rules")
     else:
-        shutil.copyfile(PLUGIN_ROOT / "defaults" / "model-router.json", rules)
-        print(f"rules:  created {RULES_FILE} with default rules")
+        print(f"rules:  kept existing {relative_rules}")
+    try:
+        rules_file.load(project)
+    except rules_file.RulesFileError as e:
+        print(f"rules:  warning: {e}")
+
 
     agents_dir.mkdir(parents=True, exist_ok=True)
     for tier in TIERS:
@@ -193,7 +189,9 @@ def init(args: argparse.Namespace) -> None:
             print(f"agent:  kept existing {relative} -> {existing[tier]}{ignored}; "
                   "use --force to overwrite")
             continue
-        description, body = read_source_agent(tier)
+        description = catalog[tier].description.replace("by the model-router skill",
+                                                        "by model-router")
+        body = catalog[tier].body
         paths[tier].write_text(
             render_agent(args.tool, names[tier], description, models[tier], body))
         print(f"agent:  wrote {relative} -> {models[tier]}")

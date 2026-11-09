@@ -5,20 +5,21 @@ Prints nothing for other tools or agents, and never blocks the call.
 """
 
 import json
-import re
 import sys
 from pathlib import Path
 
-PLUGIN_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tier_catalog  # noqa: E402
+
 PREFIX = "model-router:"
 
 
 def default_model(agent_name: str) -> str:
-    agent_file = PLUGIN_ROOT / "agents" / f"{agent_name}.md"
-    if not agent_file.exists():
-        return "unknown"
-    match = re.search(r"^model:\s*(\S+)", agent_file.read_text(), re.M)
-    return match.group(1) if match else "unknown"
+    try:
+        tier = tier_catalog.for_agent(agent_name)
+    except tier_catalog.TierCatalogError:
+        return "unknown"  # announcing is best-effort, never block the agent
+    return tier.model if tier else "unknown"
 
 
 def main() -> None:
